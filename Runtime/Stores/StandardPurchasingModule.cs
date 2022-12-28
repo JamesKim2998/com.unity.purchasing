@@ -45,7 +45,8 @@ namespace UnityEngine.Purchasing
         private static readonly Dictionary<AppStore, string> AndroidStoreNameMap = new Dictionary<AppStore, string>() {
             { AppStore.AmazonAppStore, AmazonApps.Name },
             { AppStore.GooglePlay, GooglePlay.Name },
-            { AppStore.UDP, UDP.Name},
+            // XXX: UDP 내부적으로 리플렉션을 사용하는데 이게 시간이 오래 걸려서 주석처리.
+            // { AppStore.UDP, UDP.Name},
             { AppStore.NotSpecified, GooglePlay.Name }
         };
 
