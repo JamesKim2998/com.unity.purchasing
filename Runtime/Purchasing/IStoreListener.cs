@@ -12,13 +12,6 @@ namespace UnityEngine.Purchasing
         /// Purchasing failed to initialise for a non recoverable reason.
         /// </summary>
         /// <param name="error"> The failure reason. </param>
-        [Obsolete]
-        void OnInitializeFailed(InitializationFailureReason error);
-
-        /// <summary>
-        /// Purchasing failed to initialise for a non recoverable reason.
-        /// </summary>
-        /// <param name="error"> The failure reason. </param>
         /// <param name="message"> More detail on the error : for example the GoogleBillingResponseCode. </param>
         void OnInitializeFailed(InitializationFailureReason error, string? message);
 
