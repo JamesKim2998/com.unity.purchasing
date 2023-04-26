@@ -2,12 +2,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using UnityEngine.Purchasing.Extension;
 using UnityEngine.Purchasing.Interfaces;
 using UnityEngine.Purchasing.Models;
-using UnityEngine.Purchasing.Telemetry;
 
 namespace UnityEngine.Purchasing
 {
@@ -26,7 +24,6 @@ namespace UnityEngine.Purchasing
         readonly IGoogleQueryPurchasesService m_GoogleQueryPurchasesService;
         readonly IGooglePriceChangeService m_GooglePriceChangeService;
         readonly IGoogleLastKnownProductService m_GoogleLastKnownProductService;
-        readonly ITelemetryDiagnostics m_TelemetryDiagnostics;
         readonly ILogger m_Logger;
 
         internal GooglePlayStoreService(
@@ -38,7 +35,6 @@ namespace UnityEngine.Purchasing
             IBillingClientStateListener billingClientStateListener,
             IGooglePriceChangeService priceChangeService,
             IGoogleLastKnownProductService lastKnownProductService,
-            ITelemetryDiagnostics telemetryDiagnostics,
             ILogger logger)
         {
             m_BillingClient = billingClient;
@@ -49,7 +45,6 @@ namespace UnityEngine.Purchasing
             m_GooglePriceChangeService = priceChangeService;
             m_GoogleLastKnownProductService = lastKnownProductService;
             m_BillingClientStateListener = billingClientStateListener;
-            m_TelemetryDiagnostics = telemetryDiagnostics;
             m_Logger = logger;
         }
 
@@ -242,7 +237,6 @@ namespace UnityEngine.Purchasing
             }
             catch (Exception ex)
             {
-                m_TelemetryDiagnostics.SendDiagnostic(TelemetryDiagnosticNames.FetchPurchasesError, ex);
             }
         }
 

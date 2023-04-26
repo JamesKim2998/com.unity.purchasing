@@ -4,13 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading.Tasks;
 using Uniject;
 using UnityEngine.Purchasing.Extension;
 using UnityEngine.Purchasing.Interfaces;
 using UnityEngine.Purchasing.Models;
 using UnityEngine.Purchasing.Stores.Util;
-using UnityEngine.Purchasing.Telemetry;
 
 namespace UnityEngine.Purchasing
 {
@@ -22,11 +20,9 @@ namespace UnityEngine.Purchasing
         readonly IRetryPolicy m_RetryPolicy;
         readonly IGoogleProductCallback m_GoogleProductCallback;
         readonly IUtil m_Util;
-        readonly ITelemetryDiagnostics m_TelemetryDiagnostics;
 
         internal QuerySkuDetailsService(IGoogleBillingClient billingClient, IGoogleCachedQuerySkuDetailsService googleCachedQuerySkuDetailsService,
-            ISkuDetailsConverter skuDetailsConverter, IRetryPolicy retryPolicy, IGoogleProductCallback googleProductCallback, IUtil util,
-            ITelemetryDiagnostics telemetryDiagnostics)
+            ISkuDetailsConverter skuDetailsConverter, IRetryPolicy retryPolicy, IGoogleProductCallback googleProductCallback, IUtil util)
         {
             m_BillingClient = billingClient;
             m_GoogleCachedQuerySkuDetailsService = googleCachedQuerySkuDetailsService;
@@ -34,7 +30,6 @@ namespace UnityEngine.Purchasing
             m_RetryPolicy = retryPolicy;
             m_GoogleProductCallback = googleProductCallback;
             m_Util = util;
-            m_TelemetryDiagnostics = telemetryDiagnostics;
         }
 
 
@@ -72,14 +67,13 @@ namespace UnityEngine.Purchasing
             }
             catch (Exception ex)
             {
-                m_TelemetryDiagnostics.SendDiagnostic(TelemetryDiagnosticNames.QueryAsyncSkuError, ex);
                 Debug.LogError($"Unity IAP - QueryAsyncSkuWithRetries: {ex}");
             }
         }
 
         void TryQueryAsyncSkuWithRetries(IReadOnlyCollection<ProductDefinition> products, Action<List<AndroidJavaObject>> onSkuDetailsResponse, Action retryQuery)
         {
-            var consolidator = new SkuDetailsResponseConsolidator(m_Util, m_TelemetryDiagnostics, skuDetailsQueryResponse =>
+            var consolidator = new SkuDetailsResponseConsolidator(skuDetailsQueryResponse =>
             {
                 m_GoogleCachedQuerySkuDetailsService.AddCachedQueriedSkus(skuDetailsQueryResponse.SkuDetails());
                 if (ShouldRetryQuery(products, skuDetailsQueryResponse))

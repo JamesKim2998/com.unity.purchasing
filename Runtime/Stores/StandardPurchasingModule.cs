@@ -5,7 +5,6 @@ using Uniject;
 using UnityEngine.Purchasing.Extension;
 using UnityEngine.Purchasing.Interfaces;
 using UnityEngine.Purchasing.Models;
-using UnityEngine.Purchasing.Telemetry;
 using UnityEngine.Purchasing.Utils;
 
 #if UNITY_PURCHASING_GPBL
@@ -38,8 +37,6 @@ namespace UnityEngine.Purchasing
         internal IUtil util { get; private set; }
         internal ILogger logger { get; private set; }
         internal StoreInstance storeInstance { get; private set; }
-        internal ITelemetryMetricsInstanceWrapper telemetryMetricsInstanceWrapper { get; set; }
-        internal ITelemetryDiagnosticsInstanceWrapper telemetryDiagnosticsInstanceWrapper { get; set; }
         // Map Android store enums to their public names.
         // Necessary because store enum names and public names almost, but not quite, match.
         private static readonly Dictionary<AppStore, string> AndroidStoreNameMap = new Dictionary<AppStore, string>() {
@@ -62,7 +59,7 @@ namespace UnityEngine.Purchasing
         }
 
         internal StandardPurchasingModule(IUtil util, ILogger logger, INativeStoreProvider nativeStoreProvider,
-            RuntimePlatform platform, AppStore android, ITelemetryDiagnosticsInstanceWrapper telemetryDiagnosticsInstanceWrapper, ITelemetryMetricsInstanceWrapper telemetryMetricsInstanceWrapper)
+            RuntimePlatform platform, AppStore android)
         {
             this.util = util;
             this.logger = logger;
@@ -71,8 +68,6 @@ namespace UnityEngine.Purchasing
             useFakeStoreUIMode = FakeStoreUIMode.Default;
             useFakeStoreAlways = false;
             appStore = android;
-            this.telemetryDiagnosticsInstanceWrapper = telemetryDiagnosticsInstanceWrapper;
-            this.telemetryMetricsInstanceWrapper = telemetryMetricsInstanceWrapper;
         }
 
         /// <summary>
@@ -146,9 +141,7 @@ namespace UnityEngine.Purchasing
                     logger,
                     new NativeStoreProvider(),
                     Application.platform,
-                    androidStore,
-                    new TelemetryDiagnosticsInstanceWrapper(logger, util),
-                    new TelemetryMetricsInstanceWrapper(logger, util));
+                    androidStore);
             }
 
             return ModuleInstance;
@@ -243,9 +236,7 @@ namespace UnityEngine.Purchasing
             }
             else
             {
-                var telemetryMetrics = new TelemetryMetricsService(telemetryMetricsInstanceWrapper);
-                var store = new MetricizedJsonStore(telemetryMetrics);
-                return InstantiateAndroidHelper(store);
+                return InstantiateAndroidHelper(new JSONStore());
             }
         }
 
@@ -260,14 +251,9 @@ namespace UnityEngine.Purchasing
             IGooglePlayStoreFinishTransactionService googlePlayStoreFinishTransactionService = new GooglePlayStoreFinishTransactionService(googlePlayStoreService);
             IGoogleFetchPurchases googleFetchPurchases = new GoogleFetchPurchases(googlePlayStoreService, util);
             var googlePlayConfiguration = BuildGooglePlayStoreConfiguration(googlePlayStoreService, googlePurchaseCallback, googleProductCallback);
-            var telemetryDiagnostics = new TelemetryDiagnostics(telemetryDiagnosticsInstanceWrapper);
-            var telemetryMetrics = new TelemetryMetricsService(telemetryMetricsInstanceWrapper);
-            var googlePlayStoreExtensions = new MetricizedGooglePlayStoreExtensions(
+            var googlePlayStoreExtensions = new GooglePlayStoreExtensions(
                 googlePlayStoreService,
-                googlePlayStoreFinishTransactionService,
-                logger,
-                telemetryDiagnostics,
-                telemetryMetrics);
+                logger);
             IGooglePlayStoreRetrieveProductsService googlePlayStoreRetrieveProductsService = new GooglePlayStoreRetrieveProductsService(
                 googlePlayStoreService,
                 googleFetchPurchases,
@@ -318,21 +304,19 @@ namespace UnityEngine.Purchasing
             var googlePurchaseUpdatedListener = new GooglePurchaseUpdatedListener(googleLastKnownProductService,
                 googlePurchaseCallback, googlePurchaseBuilder, googleCachedQuerySkuDetailsService,
                 googlePurchaseStateEnumProvider);
-            var telemetryDiagnostics = new TelemetryDiagnostics(telemetryDiagnosticsInstanceWrapper);
-            var googleBillingClient = new GoogleBillingClient(googlePurchaseUpdatedListener, util, telemetryDiagnostics);
+            var googleBillingClient = new GoogleBillingClient(googlePurchaseUpdatedListener, util);
             var skuDetailsConverter = new SkuDetailsConverter();
             var retryPolicy = new ExponentialRetryPolicy();
-            var googleQuerySkuDetailsService = new QuerySkuDetailsService(googleBillingClient, googleCachedQuerySkuDetailsService, skuDetailsConverter, retryPolicy, googleProductCallback, util, telemetryDiagnostics);
+            var googleQuerySkuDetailsService = new QuerySkuDetailsService(googleBillingClient, googleCachedQuerySkuDetailsService, skuDetailsConverter, retryPolicy, googleProductCallback, util);
             var purchaseService = new GooglePurchaseService(googleBillingClient, googlePurchaseCallback, googleQuerySkuDetailsService);
             var queryPurchasesService = new GoogleQueryPurchasesService(googleBillingClient, googlePurchaseBuilder);
             var finishTransactionService = new GoogleFinishTransactionService(googleBillingClient, queryPurchasesService);
             var billingClientStateListener = new BillingClientStateListener();
             var priceChangeService = new GooglePriceChangeService(googleBillingClient, googleQuerySkuDetailsService);
-            var telemetryMetrics = new TelemetryMetricsService(telemetryMetricsInstanceWrapper);
 
             googlePurchaseUpdatedListener.SetGoogleQueryPurchaseService(queryPurchasesService);
 
-            var googlePlayStoreService = new MetricizedGooglePlayStoreService(
+            var googlePlayStoreService = new GooglePlayStoreService(
                 googleBillingClient,
                 googleQuerySkuDetailsService,
                 purchaseService,
@@ -341,8 +325,6 @@ namespace UnityEngine.Purchasing
                 billingClientStateListener,
                 priceChangeService,
                 googleLastKnownProductService,
-                telemetryDiagnostics,
-                telemetryMetrics,
                 logger
             );
 
@@ -389,9 +371,7 @@ namespace UnityEngine.Purchasing
 
         private IStore InstantiateApple()
         {
-            var telemetryDiagnostics = new TelemetryDiagnostics(telemetryDiagnosticsInstanceWrapper);
-            var telemetryMetrics = new TelemetryMetricsService(telemetryMetricsInstanceWrapper);
-            var store = new MetricizedAppleStoreImpl(util, telemetryDiagnostics, telemetryMetrics);
+            var store = new AppleStoreImpl(util);
             var appleBindings = m_NativeStoreProvider.GetStorekit(store);
             store.SetNativeStore(appleBindings);
             BindExtension<IAppleExtensions>(store);

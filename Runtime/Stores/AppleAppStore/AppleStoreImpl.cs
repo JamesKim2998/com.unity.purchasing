@@ -8,7 +8,6 @@ using Uniject;
 using UnityEngine.Purchasing.Extension;
 using UnityEngine.Purchasing.MiniJSON;
 using UnityEngine.Purchasing.Security;
-using UnityEngine.Purchasing.Telemetry;
 
 namespace UnityEngine.Purchasing
 {
@@ -29,7 +28,6 @@ namespace UnityEngine.Purchasing
         Action? m_FetchStorePromotionVisibilityError;
         Action<string, AppleStorePromotionVisibility>? m_FetchStorePromotionVisibilitySuccess;
         INativeAppleStore? m_Native;
-        readonly ITelemetryDiagnostics m_TelemetryDiagnostics;
 
         static IUtil? s_Util;
         static AppleStoreImpl? s_Instance;
@@ -40,11 +38,10 @@ namespace UnityEngine.Purchasing
 
         string? m_ProductsJson;
 
-        protected AppleStoreImpl(IUtil util, ITelemetryDiagnostics telemetryDiagnostics)
+        public AppleStoreImpl(IUtil util)
         {
             s_Util = util;
             s_Instance = this;
-            m_TelemetryDiagnostics = telemetryDiagnostics;
             m_ProductDescriptionsDeserializer = new AppleJsonProductDescriptionsDeserializer();
         }
 
@@ -128,7 +125,6 @@ namespace UnityEngine.Purchasing
             if (product == null)
             {
                 var ex = new ArgumentNullException(nameof(product));
-                m_TelemetryDiagnostics.SendDiagnostic(TelemetryDiagnosticNames.InvalidProductError, ex);
                 throw ex;
             }
             m_Native?.SetStorePromotionVisibility(product.definition.storeSpecificId, visibility.ToString());
@@ -543,7 +539,6 @@ namespace UnityEngine.Purchasing
                 }
                 catch (Exception ex)
                 {
-                    m_TelemetryDiagnostics.SendDiagnostic(TelemetryDiagnosticNames.ParseReceiptTransactionError, ex);
                 }
             }
             return appleReceipt;

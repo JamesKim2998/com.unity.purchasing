@@ -1,11 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Text;
 using Stores.Util;
 using UnityEngine.Purchasing.Extension;
-using UnityEngine.Purchasing.Telemetry;
 
 namespace UnityEngine.Purchasing
 {
