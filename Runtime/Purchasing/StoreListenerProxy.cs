@@ -7,14 +7,12 @@ namespace UnityEngine.Purchasing
     /// </summary>
     internal class StoreListenerProxy : IInternalStoreListener
     {
-        private readonly IAnalyticsClient m_Analytics;
         private readonly IStoreListener m_ForwardTo;
         private readonly IExtensionProvider m_Extensions;
 
-        public StoreListenerProxy(IStoreListener forwardTo, IAnalyticsClient analytics, IExtensionProvider extensions)
+        public StoreListenerProxy(IStoreListener forwardTo, IExtensionProvider extensions)
         {
             m_ForwardTo = forwardTo;
-            m_Analytics = analytics;
             m_Extensions = extensions;
         }
 
@@ -30,13 +28,11 @@ namespace UnityEngine.Purchasing
 
         public PurchaseProcessingResult ProcessPurchase(PurchaseEventArgs e)
         {
-            m_Analytics.OnPurchaseSucceeded(e.purchasedProduct);
             return m_ForwardTo.ProcessPurchase(e);
         }
 
         public void OnPurchaseFailed(Product i, PurchaseFailureReason p)
         {
-            m_Analytics.OnPurchaseFailed(i, p);
             m_ForwardTo.OnPurchaseFailed(i, p);
         }
     }
