@@ -1,12 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using UnityEditor.Callbacks;
-using UnityEditor.Connect;
-using UnityEditor.PackageManager;
-using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 using UnityEngine.Purchasing;
 
@@ -18,109 +13,14 @@ namespace UnityEditor.Purchasing
     [InitializeOnLoad]
     public static class UnityPurchasingEditor
     {
-        const string PurchasingPackageName = "com.unity.purchasing";
-        const string UdpPackageName = "com.unity.purchasing.udp";
-        const string k_UdpErrorText = "In order to use UDP functionality, you must install or update the Unity Distribution Portal Package. Please configure your project's packages before running UDP-related editor commands in batch mode.";
-
         const string ModePath = "Assets/Resources/BillingMode.json";
         const string prevModePath = "Assets/Plugins/UnityPurchasing/Resources/BillingMode.json";
-        static ListRequest m_ListRequestOfPackage;
-        static bool m_UmpPackageInstalled;
         const string BinPath = "Packages/com.unity.purchasing/Plugins/UnityPurchasing/Android";
-        const string AssetStoreUdpBinPath = "Assets/Plugins/UDP/Android";
-        static readonly string PackManUdpBinPath = $"Packages/{UdpPackageName}/Android";
 
         static StoreConfiguration config;
         static readonly AppStore defaultAppStore = AppStore.GooglePlay;
         internal delegate void AndroidTargetChange(AppStore store);
         internal static AndroidTargetChange OnAndroidTargetChange;
-
-        static readonly bool s_udpAvailable = UdpSynchronizationApi.CheckUdpAvailability();
-        internal const string MenuItemRoot = "Services/" + PurchasingDisplayName;
-        internal const string PurchasingDisplayName = "In-App Purchasing";
-
-        // Check if UDP upm package is installed.
-        internal static bool IsUdpUmpPackageInstalled()
-        {
-            if (m_ListRequestOfPackage == null || m_ListRequestOfPackage.IsCompleted)
-            {
-                return m_UmpPackageInstalled;
-            }
-            else
-            {
-                //As a backup, don't block user if the default location is present.
-                return File.Exists($"Packages/{UdpPackageName}/package.json");
-            }
-        }
-
-        static void ListingCurrentPackageProgress()
-        {
-            if (m_ListRequestOfPackage.IsCompleted)
-            {
-                m_UmpPackageInstalled = false;
-                EditorApplication.update -= ListingCurrentPackageProgress;
-                if (m_ListRequestOfPackage.Status == StatusCode.Success)
-                {
-                    var udpPackage = m_ListRequestOfPackage.Result.FirstOrDefault(package => package.name == UdpPackageName);
-
-                    m_UmpPackageInstalled = udpPackage != null;
-                }
-                else if (m_ListRequestOfPackage.Status >= StatusCode.Failure)
-                {
-                    Debug.LogError(m_ListRequestOfPackage.Error.message);
-                }
-            }
-        }
-
-        internal static bool IsUdpAssetStorePackageInstalled()
-        {
-            return File.Exists("Assets/UDP/UDP.dll") || File.Exists("Assets/Plugins/UDP/UDP.dll");
-        }
-
-        [InitializeOnLoadMethod]
-        static void CheckUdpUmpPackageInstalled()
-        {
-            if (IsInBatchMode())
-            {
-                CheckUdpUmpPackageInstalledViaManifest();
-            }
-            else
-            {
-                CheckUdpUmpPackageInstalledViaPackageManager();
-            }
-        }
-
-        static bool IsInBatchMode()
-        {
-            return UnityEditorInternal.InternalEditorUtility.inBatchMode;
-        }
-
-        static void CheckUdpUmpPackageInstalledViaPackageManager()
-        {
-            if (IsInBatchMode())
-            {
-                Debug.unityLogger.LogIAPError("CheckUdpUmpPackageInstalledViaPackageManager will always fail in Batch Mode. Call CheckUdpUmpPackageInstalledViaManifest instead");
-            }
-
-            m_ListRequestOfPackage = Client.List();
-            EditorApplication.update += ListingCurrentPackageProgress;
-        }
-
-        static void CheckUdpUmpPackageInstalledViaManifest()
-        {
-            if (!IsInBatchMode())
-            {
-                Debug.unityLogger.LogIAPWarning("When not running in batch mode, it's more reliable to check the presence of UDP via CheckUdpUmpPackageInstalledViaPackageManager, in case the manifest file is out of date.");
-            }
-
-            m_UmpPackageInstalled = false;
-
-            if (File.Exists("Packages/manifest.json"))
-            {
-                var jsonText = File.ReadAllText("Packages/manifest.json");
-                m_UmpPackageInstalled = jsonText.Contains(UdpPackageName);
-            }
-        }
 
         /// <summary>
         /// Since we are changing the billing mode's location, it may be necessary to migrate existing billing
@@ -246,27 +146,12 @@ namespace UnityEditor.Purchasing
 
             if (target == AppStore.UDP)
             {
-                if (!s_udpAvailable || (!IsUdpUmpPackageInstalled() && !IsUdpAssetStorePackageInstalled()) || !UdpSynchronizationApi.CheckUdpCompatibility())
-                {
-                    if (IsInBatchMode())
-                    {
-                        Debug.unityLogger.LogIAPError(k_UdpErrorText);
-                    }
-                    else
-                    {
-                        UdpInstaller.PromptUdpInstallation();
-                    }
-
-                    return ConfiguredAppStore();
-                }
+                throw new NotSupportedException();
             }
 
             ConfigureProject(target);
             SaveConfig(target);
             OnAndroidTargetChange?.Invoke(target);
-
-            var targetString = Enum.GetName(typeof(AppStore), target);
-            GenericEditorDropdownSelectEventSenderHelpers.SendIapMenuSelectTargetStoreEvent(targetString);
 
             return ConfiguredAppStore();
         }
@@ -301,41 +186,6 @@ namespace UnityEditor.Purchasing
                     {
                         importer = (PluginImporter)AssetImporter.GetAtPath(paths[0]);
                         importer.SetCompatibleWithPlatform(BuildTarget.Android, enabled);
-                    }
-                }
-            }
-
-            var UdpBinPath = IsUdpUmpPackageInstalled() ? PackManUdpBinPath :
-                IsUdpAssetStorePackageInstalled() ? AssetStoreUdpBinPath :
-                null;
-
-            if (s_udpAvailable && !string.IsNullOrEmpty(UdpBinPath))
-            {
-                foreach (var mapping in UdpSpecificFiles)
-                {
-                    // All files enabled when store is determined at runtime.
-                    var enabled = target == AppStore.NotSpecified;
-                    // Otherwise this file must be needed on the target.
-                    enabled |= mapping.Value == target;
-
-                    var path = $"{UdpBinPath}/{mapping.Key}";
-                    var importer = (PluginImporter)AssetImporter.GetAtPath(path);
-
-                    if (importer != null)
-                    {
-                        importer.SetCompatibleWithPlatform(BuildTarget.Android, enabled);
-                    }
-                    else
-                    {
-                        // Search for any occurrence of this file
-                        // Only fail if more than one found
-                        var paths = FindPaths(mapping.Key);
-
-                        if (paths.Length == 1)
-                        {
-                            importer = (PluginImporter)AssetImporter.GetAtPath(paths[0]);
-                            importer.SetCompatibleWithPlatform(BuildTarget.Android, enabled);
-                        }
                     }
                 }
             }
@@ -407,20 +257,6 @@ namespace UnityEditor.Purchasing
                     Debug.LogError(e);
                 }
             }
-        }
-
-        [MenuItem(IapMenuConsts.MenuItemRoot + "/Configure...", false, 0)]
-        private static void ConfigurePurchasingSettings()
-        {
-#if ENABLE_EDITOR_GAME_SERVICES && SERVICES_SDK_CORE_ENABLED
-            var path = PurchasingSettingsProvider.GetSettingsPath();
-            SettingsService.OpenProjectSettings(path);
-#elif UNITY_2020_3_OR_NEWER
-            ServicesUtils.OpenServicesProjectSettings(PurchasingService.instance.projectSettingsPath, PurchasingService.instance.settingsProviderClassName);
-#else
-            EditorApplication.ExecuteMenuItem("Window/General/Services");
-#endif
-            GameServicesEventSenderHelpers.SendTopMenuConfigure();
         }
     }
 }

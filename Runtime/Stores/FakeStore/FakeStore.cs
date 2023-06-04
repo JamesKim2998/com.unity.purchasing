@@ -69,17 +69,6 @@ namespace UnityEngine.Purchasing
                 if (unavailableProductId != product.id)
                 {
                     var metadata = new ProductMetadata("$0.01", "Fake title for " + product.id, "Fake description", "USD", 0.01m);
-                    var catalog = ProductCatalog.LoadDefaultCatalog();
-                    if (catalog != null)
-                    {
-                        foreach (var item in catalog.allProducts)
-                        {
-                            if (item.id == product.id)
-                            {
-                                metadata = new ProductMetadata(item.googlePrice.value.ToString(), item.defaultDescription.Title, item.defaultDescription.Description, "USD", item.googlePrice.value);
-                            }
-                        }
-                    }
                     products.Add(new ProductDescription(product.storeSpecificId, metadata));
                 }
             }
