@@ -1,4 +1,5 @@
 #nullable enable
+using UnityEngine.Purchasing.Extension;
 
 namespace UnityEngine.Purchasing
 {
@@ -31,9 +32,17 @@ namespace UnityEngine.Purchasing
             return m_ForwardTo.ProcessPurchase(e);
         }
 
-        public void OnPurchaseFailed(Product i, PurchaseFailureReason p)
+        public void OnPurchaseFailed(Product i, PurchaseFailureDescription p)
         {
-            m_ForwardTo.OnPurchaseFailed(i, p);
+            if (m_ForwardTo is IDetailedStoreListener listener)
+            {
+                listener.OnPurchaseFailed(i, p);
+            }
+            else
+            {
+#pragma warning disable 0618
+                m_ForwardTo.OnPurchaseFailed(i, p.reason);
+            }
         }
     }
 }

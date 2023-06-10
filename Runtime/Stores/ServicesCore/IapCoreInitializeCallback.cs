@@ -19,13 +19,13 @@ namespace UnityEngine.Purchasing.Registration
             return Task.CompletedTask;
         }
 
-        void CacheInitializedEnvironment(CoreRegistry registry)
+        static void CacheInitializedEnvironment(CoreRegistry registry)
         {
             var currentEnvironment = GetCurrentEnvironment(registry);
             CoreServicesEnvironmentSubject.Instance().UpdateCurrentEnvironment(currentEnvironment);
         }
 
-        string GetCurrentEnvironment(CoreRegistry registry)
+        static string GetCurrentEnvironment(CoreRegistry registry)
         {
             try
             {

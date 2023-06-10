@@ -1,5 +1,9 @@
 using System;
 using System.Collections.Generic;
+#if IAP_ANALYTICS_SERVICE_ENABLED || IAP_ANALYTICS_SERVICE_ENABLED_WITH_SERVICE_COMPONENT
+using Unity.Services.Analytics;
+using Unity.Services.Core;
+#endif
 using UnityEngine.Purchasing.Extension;
 
 namespace UnityEngine.Purchasing
@@ -14,7 +18,23 @@ namespace UnityEngine.Purchasing
         /// </summary>
         /// <param name="listener"> The <c>IStoreListener</c> to receive callbacks for future transactions </param>
         /// <param name="builder"> The <c>ConfigurationBuilder</c> containing the product definitions mapped to stores </param>
+        [Obsolete("Use Initialize(IDetailedStoreListener, ConfigurationBuilder)", false)]
         public static void Initialize(IStoreListener listener, ConfigurationBuilder builder)
+        {
+            var logger = Debug.unityLogger;
+            var unityServicesInitializationChecker = new UnityServicesInitializationChecker(logger);
+
+            Initialize(listener, builder, logger, Application.persistentDataPath,
+                builder.factory.GetCatalogProvider(),
+                unityServicesInitializationChecker);
+        }
+
+        /// <summary>
+        /// The main initialization call for Unity Purchasing.
+        /// </summary>
+        /// <param name="listener"> The <c>IDetailedStoreListener</c> to receive callbacks for future transactions </param>
+        /// <param name="builder"> The <c>ConfigurationBuilder</c> containing the product definitions mapped to stores </param>
+        public static void Initialize(IDetailedStoreListener listener, ConfigurationBuilder builder)
         {
             var logger = Debug.unityLogger;
             var unityServicesInitializationChecker = new UnityServicesInitializationChecker(logger);
