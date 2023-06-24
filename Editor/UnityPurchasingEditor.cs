@@ -97,22 +97,6 @@ namespace UnityEditor.Purchasing
             TargetAndroidStore(defaultAppStore);
         }
 
-#if !ENABLE_EDITOR_GAME_SERVICES
-        const string SwitchStoreMenuItem = IapMenuConsts.MenuItemRoot + "/Switch Store...";
-        [MenuItem(SwitchStoreMenuItem, false, 200)]
-        static void OnSwitchStoreMenu()
-        {
-            var window = EditorWindow.GetWindow(typeof(SwitchStoreEditorWindow));
-            window.titleContent.text = IapMenuConsts.SwitchStoreTitleText;
-            window.minSize = new Vector2(340, 180);
-            window.Show();
-
-            GameServicesEventSenderHelpers.SendTopMenuSwitchStoreEvent();
-        }
-#else
-        const string SwitchStoreMenuItem = IapMenuConsts.MenuItemRoot + "/Configure...";
-#endif
-
         private static AppStore GetAppStoreSafe()
         {
             var store = AppStore.NotSpecified;
@@ -248,12 +232,6 @@ namespace UnityEditor.Purchasing
                 }
                 catch (Exception e)
                 {
-#if ENABLE_EDITOR_GAME_SERVICES
-                    Debug.LogError("Unity IAP unable to strip undesired Android stores from build, check file: " + ModePath);
-#else
-                    Debug.LogError("Unity IAP unable to strip undesired Android stores from build, use menu (e.g. "
-                        + SwitchStoreMenuItem + ") and check file: " + ModePath);
-#endif
                     Debug.LogError(e);
                 }
             }
