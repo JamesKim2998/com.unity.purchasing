@@ -23,8 +23,7 @@ namespace UnityEngine.Purchasing
         {
             var logger = Debug.unityLogger;
 
-            Initialize(listener, builder, logger, Application.persistentDataPath,
-                builder.factory.GetCatalogProvider());
+            Initialize(listener, builder, logger, Application.persistentDataPath);
         }
 
         /// <summary>
@@ -36,8 +35,7 @@ namespace UnityEngine.Purchasing
         {
             var logger = Debug.unityLogger;
 
-            Initialize(listener, builder, logger, Application.persistentDataPath,
-                builder.factory.GetCatalogProvider());
+            Initialize(listener, builder, logger, Application.persistentDataPath);
         }
 
         /// <summary>
@@ -57,8 +55,7 @@ namespace UnityEngine.Purchasing
         /// Created for integration testing.
         /// </summary>
         internal static void Initialize(IStoreListener listener, ConfigurationBuilder builder,
-            ILogger logger, string persistentDatapath,
-            ICatalogProvider catalog)
+            ILogger logger, string persistentDatapath)
         {
             var transactionLog = new TransactionLog(logger, persistentDatapath);
             var manager = new PurchasingManager(transactionLog, logger, builder.factory.service,
@@ -66,35 +63,7 @@ namespace UnityEngine.Purchasing
 
             // Proxy the PurchasingManager's callback interface to forward Transactions to Analytics.
             var proxy = new StoreListenerProxy(listener, builder.factory);
-            FetchAndMergeProducts(builder.useCatalogProvider, builder.products, catalog, response =>
-            {
-                manager.Initialize(proxy, response);
-            });
-        }
-
-        internal static void FetchAndMergeProducts(bool useCatalog,
-            HashSet<ProductDefinition> localProductSet, ICatalogProvider catalog, Action<HashSet<ProductDefinition>> callback)
-        {
-            if (useCatalog && catalog != null)
-            {
-                catalog.FetchProducts(cloudProducts =>
-                {
-                    var updatedProductSet = new HashSet<ProductDefinition>(localProductSet);
-
-                    foreach (var product in cloudProducts)
-                    {
-                        // Products are hashed by id, so this should remove the local product with the same id before adding the cloud product
-                        updatedProductSet.Remove(product);
-                        updatedProductSet.Add(product);
-                    }
-
-                    callback(updatedProductSet);
-                });
-            }
-            else
-            {
-                callback(localProductSet);
-            }
+            manager.Initialize(proxy, builder.products);
         }
     }
 }

@@ -82,16 +82,6 @@ namespace UnityEngine.Purchasing
         }
 
         /// <summary>
-        /// Whether or not the project will use the catalog stored on the cloud or the one cached locally.
-        /// </summary>
-        /// <value> True if the project will use the catalog stored on the cloud. </value>
-        public bool useCatalogProvider
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
         /// The set of products in the catalog.
         /// </summary>
         public HashSet<ProductDefinition> products { get; } = new HashSet<ProductDefinition>();
