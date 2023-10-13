@@ -187,10 +187,15 @@ namespace UnityEngine.Purchasing
             }
 
             // If we are using a JSONStore, bind to it to get transaction history.
-            if ((util != null) && util.IsClassOrSubclass(typeof(JSONStore), storeInstance.instance.GetType()))
+            if ((util != null) && IsClassOrSubclass(typeof(JSONStore), storeInstance.instance.GetType()))
             {
                 var jsonStore = (JSONStore)storeInstance.instance;
                 BindExtension<ITransactionHistoryExtensions>(jsonStore);
+            }
+
+            static bool IsClassOrSubclass(Type potentialBase, Type potentialDescendant)
+            {
+                return potentialDescendant.IsSubclassOf(potentialBase) || potentialDescendant == potentialBase;
             }
         }
 
