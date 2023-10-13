@@ -17,7 +17,6 @@ namespace UnityEngine.Purchasing
         private readonly ILogger m_Logger;
         private readonly TransactionLog m_TransactionLog;
         private readonly string m_StoreName;
-        private readonly IUnityServicesInitializationChecker m_UnityServicesInitializationChecker;
         private Action? m_AdditionalProductsCallback;
         private Action<InitializationFailureReason>? m_AdditionalProductsFailCallback;
         private Action<InitializationFailureReason, string?>? m_AdditionalProductsDetailedFailCallback;
@@ -29,14 +28,13 @@ namespace UnityEngine.Purchasing
         /// </summary>
         public bool useTransactionLog { get; set; }
 
-        internal PurchasingManager(TransactionLog tDb, ILogger logger, IStore store, string storeName, IUnityServicesInitializationChecker unityServicesInitializationChecker)
+        internal PurchasingManager(TransactionLog tDb, ILogger logger, IStore store, string storeName)
         {
             m_TransactionLog = tDb;
             m_Store = store;
             m_Logger = logger;
             m_StoreName = storeName;
             useTransactionLog = true;
-            m_UnityServicesInitializationChecker = unityServicesInitializationChecker;
         }
 
         public void InitiatePurchase(Product product)
@@ -51,8 +49,6 @@ namespace UnityEngine.Purchasing
 
         public void InitiatePurchase(Product? product, string developerPayload)
         {
-            m_UnityServicesInitializationChecker.CheckAndLogWarning();
-
             if (null == product)
             {
                 m_Logger.LogIAPWarning("Trying to purchase null Product");

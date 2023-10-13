@@ -22,11 +22,9 @@ namespace UnityEngine.Purchasing
         public static void Initialize(IStoreListener listener, ConfigurationBuilder builder)
         {
             var logger = Debug.unityLogger;
-            var unityServicesInitializationChecker = new UnityServicesInitializationChecker(logger);
 
             Initialize(listener, builder, logger, Application.persistentDataPath,
-                builder.factory.GetCatalogProvider(),
-                unityServicesInitializationChecker);
+                builder.factory.GetCatalogProvider());
         }
 
         /// <summary>
@@ -37,11 +35,9 @@ namespace UnityEngine.Purchasing
         public static void Initialize(IDetailedStoreListener listener, ConfigurationBuilder builder)
         {
             var logger = Debug.unityLogger;
-            var unityServicesInitializationChecker = new UnityServicesInitializationChecker(logger);
 
             Initialize(listener, builder, logger, Application.persistentDataPath,
-                builder.factory.GetCatalogProvider(),
-                unityServicesInitializationChecker);
+                builder.factory.GetCatalogProvider());
         }
 
         /// <summary>
@@ -62,13 +58,11 @@ namespace UnityEngine.Purchasing
         /// </summary>
         internal static void Initialize(IStoreListener listener, ConfigurationBuilder builder,
             ILogger logger, string persistentDatapath,
-            ICatalogProvider catalog, IUnityServicesInitializationChecker unityServicesInitializationChecker)
+            ICatalogProvider catalog)
         {
-            unityServicesInitializationChecker.CheckAndLogWarning();
-
             var transactionLog = new TransactionLog(logger, persistentDatapath);
             var manager = new PurchasingManager(transactionLog, logger, builder.factory.service,
-                builder.factory.storeName, unityServicesInitializationChecker);
+                builder.factory.storeName);
 
             // Proxy the PurchasingManager's callback interface to forward Transactions to Analytics.
             var proxy = new StoreListenerProxy(listener, builder.factory);
