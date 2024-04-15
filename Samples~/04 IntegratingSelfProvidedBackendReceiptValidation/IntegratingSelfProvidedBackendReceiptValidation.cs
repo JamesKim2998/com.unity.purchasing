@@ -2,11 +2,12 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Purchasing;
+using UnityEngine.Purchasing.Extension;
 using UnityEngine.UI;
 
 namespace Samples.Purchasing.Core.IntegratingSelfProvidedBackendReceiptValidation
 {
-    public class IntegratingSelfProvidedBackendReceiptValidation : MonoBehaviour, IStoreListener
+    public class IntegratingSelfProvidedBackendReceiptValidation : MonoBehaviour, IDetailedStoreListener
     {
         IStoreController m_StoreController;
 
@@ -76,6 +77,13 @@ namespace Samples.Purchasing.Core.IntegratingSelfProvidedBackendReceiptValidatio
         public void OnPurchaseFailed(Product product, PurchaseFailureReason failureReason)
         {
             Debug.Log($"Purchase failed - Product: '{product.definition.id}', PurchaseFailureReason: {failureReason}");
+        }
+
+        public void OnPurchaseFailed(Product product, PurchaseFailureDescription failureDescription)
+        {
+            Debug.Log($"Purchase failed - Product: '{product.definition.id}'," +
+                $" Purchase failure reason: {failureDescription.reason}," +
+                $" Purchase failure details: {failureDescription.message}");
         }
 
         IEnumerator BackEndValidation(Product product)

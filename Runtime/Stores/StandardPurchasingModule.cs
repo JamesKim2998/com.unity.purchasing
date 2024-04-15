@@ -24,7 +24,7 @@ namespace UnityEngine.Purchasing
         /// </summary>
         [Obsolete("Not accurate. Use Version instead.", false)]
         public const string k_PackageVersion = "3.0.1";
-        internal readonly string k_Version = "4.8.0"; // NOTE: Changed using GenerateUnifiedIAP.sh before pack step.
+        internal readonly string k_Version = "4.11.0"; // NOTE: Changed using GenerateUnifiedIAP.sh before pack step.
         /// <summary>
         /// The version of com.unity.purchasing installed and the app was built using.
         /// </summary>
@@ -166,7 +166,6 @@ namespace UnityEngine.Purchasing
 
             BindConfiguration<IAndroidStoreSelection>(this);
 
-            BindExtension<IUDPExtensions>(new FakeUDPExtension());
             BindExtension<ITransactionHistoryExtensions>(new FakeTransactionHistoryExtensions());
 
             // Our store implementations are singletons, we must not attempt to instantiate
@@ -213,16 +212,13 @@ namespace UnityEngine.Purchasing
                     return new StoreInstance(MacAppStore.Name, InstantiateApple());
                 case RuntimePlatform.IPhonePlayer:
                 case RuntimePlatform.tvOS:
+#if UNITY_VISIONOS
+                case RuntimePlatform.VisionOS:
+#endif
                     appStore = AppStore.AppleAppStore;
                     return new StoreInstance(AppleAppStore.Name, InstantiateApple());
                 case RuntimePlatform.Android:
-                    switch (appStore)
-                    {
-                        case AppStore.UDP:
-                            return new StoreInstance(AndroidStoreNameMap[appStore], InstantiateUDP());
-                        default:
-                            return new StoreInstance(AndroidStoreNameMap[appStore], InstantiateAndroid());
-                    }
+                    return new StoreInstance(AndroidStoreNameMap[appStore], InstantiateAndroid());
                 case RuntimePlatform.WSAPlayerARM:
                 case RuntimePlatform.WSAPlayerX64:
                 case RuntimePlatform.WSAPlayerX86:
@@ -312,7 +308,8 @@ namespace UnityEngine.Purchasing
             var googleBillingClient = new GoogleBillingClient(googlePurchaseUpdatedListener, util);
             var skuDetailsConverter = new SkuDetailsConverter();
             var retryPolicy = new ExponentialRetryPolicy();
-            var googleQuerySkuDetailsService = new QuerySkuDetailsService(googleBillingClient, googleCachedQuerySkuDetailsService, skuDetailsConverter, retryPolicy, googleProductCallback, util);
+            var googleRetryPolicy = new GoogleConnectionRetryPolicy();
+            var googleQuerySkuDetailsService = new QuerySkuDetailsService(googleBillingClient, googleCachedQuerySkuDetailsService, skuDetailsConverter, retryPolicy, googleProductCallback);
             var purchaseService = new GooglePurchaseService(googleBillingClient, googlePurchaseCallback, googleQuerySkuDetailsService);
             var queryPurchasesService = new GoogleQueryPurchasesService(googleBillingClient, googlePurchaseBuilder);
             var finishTransactionService = new GoogleFinishTransactionService(googleBillingClient, queryPurchasesService);
@@ -330,21 +327,14 @@ namespace UnityEngine.Purchasing
                 billingClientStateListener,
                 priceChangeService,
                 googleLastKnownProductService,
-                logger
+                logger,
+                googleRetryPolicy,
+                util
             );
 
             googlePlayStoreService.InitConnectionWithGooglePlay();
 
             return googlePlayStoreService;
-        }
-
-        private IStore InstantiateUDP()
-        {
-            var store = new UDPImpl();
-            BindExtension<IUDPExtensions>(store);
-            var nativeUdpStore = (INativeUDPStore)GetAndroidNativeStore(store);
-            store.SetNativeStore(nativeUdpStore);
-            return store;
         }
 
         private IStore InstantiateAndroidHelper(JSONStore store)

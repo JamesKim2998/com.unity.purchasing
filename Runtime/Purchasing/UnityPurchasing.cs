@@ -59,7 +59,7 @@ namespace UnityEngine.Purchasing
         {
             var transactionLog = new TransactionLog(logger, persistentDatapath);
             var manager = new PurchasingManager(transactionLog, logger, builder.factory.service,
-                builder.factory.storeName);
+                builder.factory.storeName, builder.logUnavailableProducts);
 
             // Proxy the PurchasingManager's callback interface to forward Transactions to Analytics.
             var proxy = new StoreListenerProxy(listener, builder.factory);

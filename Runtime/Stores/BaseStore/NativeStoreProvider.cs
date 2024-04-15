@@ -46,20 +46,8 @@ namespace UnityEngine.Purchasing
 
                 case AppStore.UDP:
                 {
-                    var udpIapBridge = UdpIapBridgeInterface.GetClassType();
-                    if (udpIapBridge != null)
-                    {
-                        var udpImpl = new UDPImpl();
-                        var udpBindings = new UDPBindings();
-                        udpImpl.SetNativeStore(udpBindings);
-                        binder.RegisterExtension<IUDPExtensions>(udpImpl);
-                        return udpBindings;
-                    }
-                    else
-                    {
-                        Debug.LogError("Cannot set Android target to UDP. Make sure you have installed UDP in your project");
-                        throw new NotImplementedException();
-                    }
+                    Debug.LogError("Cannot set Android target to UDP. Make sure you have installed UDP in your project");
+                    throw new NotImplementedException();
                 }
             }
 
@@ -68,8 +56,13 @@ namespace UnityEngine.Purchasing
 
         public INativeAppleStore GetStorekit(IUnityCallback callback)
         {
-            // Both tvOS and iOS use the same Objective-C linked to the XCode project.
-            if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.tvOS)
+            // Both tvOS, iOS and visionOS use the same Objective-C linked to the XCode project.
+            if (Application.platform == RuntimePlatform.IPhonePlayer ||
+                Application.platform == RuntimePlatform.tvOS
+#if UNITY_VISIONOS
+                || Application.platform == RuntimePlatform.VisionOS
+#endif
+               )
             {
                 return new iOSStoreBindings();
             }

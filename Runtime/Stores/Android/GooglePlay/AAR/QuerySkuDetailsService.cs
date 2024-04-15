@@ -19,17 +19,15 @@ namespace UnityEngine.Purchasing
         readonly ISkuDetailsConverter m_SkuDetailsConverter;
         readonly IRetryPolicy m_RetryPolicy;
         readonly IGoogleProductCallback m_GoogleProductCallback;
-        readonly IUtil m_Util;
 
         internal QuerySkuDetailsService(IGoogleBillingClient billingClient, IGoogleCachedQuerySkuDetailsService googleCachedQuerySkuDetailsService,
-            ISkuDetailsConverter skuDetailsConverter, IRetryPolicy retryPolicy, IGoogleProductCallback googleProductCallback, IUtil util)
+            ISkuDetailsConverter skuDetailsConverter, IRetryPolicy retryPolicy, IGoogleProductCallback googleProductCallback)
         {
             m_BillingClient = billingClient;
             m_GoogleCachedQuerySkuDetailsService = googleCachedQuerySkuDetailsService;
             m_SkuDetailsConverter = skuDetailsConverter;
             m_RetryPolicy = retryPolicy;
             m_GoogleProductCallback = googleProductCallback;
-            m_Util = util;
         }
 
 
@@ -101,7 +99,7 @@ namespace UnityEngine.Purchasing
 
         IEnumerable<AndroidJavaObject> GetCachedSkuDetails(IEnumerable<ProductDefinition> products)
         {
-            var cachedProducts = products.Where(m_GoogleCachedQuerySkuDetailsService.Contains);
+            var cachedProducts = products.Where(m_GoogleCachedQuerySkuDetailsService.Contains).ToList();
             return m_GoogleCachedQuerySkuDetailsService.GetCachedQueriedSkus(cachedProducts);
         }
 

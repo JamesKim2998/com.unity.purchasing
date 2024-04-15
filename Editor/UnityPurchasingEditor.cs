@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor.Callbacks;
+using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 using UnityEngine.Purchasing;
 
@@ -15,6 +16,7 @@ namespace UnityEditor.Purchasing
     {
         const string ModePath = "Assets/Resources/BillingMode.json";
         const string prevModePath = "Assets/Plugins/UnityPurchasing/Resources/BillingMode.json";
+
         const string BinPath = "Packages/com.unity.purchasing/Plugins/UnityPurchasing/Android";
 
         static StoreConfiguration config;
@@ -61,14 +63,8 @@ namespace UnityEditor.Purchasing
         // Notice: Multiple files per target supported. While Key must be unique, Value can be duplicated!
         static readonly Dictionary<string, AppStore> StoreSpecificFiles = new Dictionary<string, AppStore>()
         {
-            {"billing-5.1.0.aar", AppStore.GooglePlay},
+            {"billing-5.2.1.aar", AppStore.GooglePlay},
             {"AmazonAppStore.aar", AppStore.AmazonAppStore}
-        };
-
-        static readonly Dictionary<string, AppStore> UdpSpecificFiles = new Dictionary<string, AppStore>() {
-            { "udp.aar", AppStore.UDP},
-            { "udpsandbox.aar", AppStore.UDP},
-            { "utils.aar", AppStore.UDP}
         };
 
         // Create or read BillingMode.json at Project Editor load
@@ -126,11 +122,6 @@ namespace UnityEditor.Purchasing
             if (!target.IsAndroid())
             {
                 throw new ArgumentException(string.Format("AppStore parameter ({0}) must be an Android app store", target));
-            }
-
-            if (target == AppStore.UDP)
-            {
-                throw new NotSupportedException();
             }
 
             ConfigureProject(target);
@@ -232,6 +223,12 @@ namespace UnityEditor.Purchasing
                 }
                 catch (Exception e)
                 {
+#if ENABLE_EDITOR_GAME_SERVICES
+                    Debug.LogError("Unity IAP unable to strip undesired Android stores from build, check file: " + ModePath);
+#else
+                    Debug.LogError("Unity IAP unable to strip undesired Android stores from build, use menu (e.g. "
+                        + SwitchStoreMenuItem + ") and check file: " + ModePath);
+#endif
                     Debug.LogError(e);
                 }
             }
