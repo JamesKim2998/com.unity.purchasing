@@ -30,7 +30,7 @@ namespace UnityEngine.Purchasing
         }
 
         [Preserve]
-        internal void onBillingSetupFinished(AndroidJavaObject billingResult)
+        public void onBillingSetupFinished(AndroidJavaObject billingResult)
         {
             IGoogleBillingResult result = new GoogleBillingResult(billingResult);
             if (result.responseCode == GoogleBillingResponseCode.Ok)
@@ -41,10 +41,12 @@ namespace UnityEngine.Purchasing
             {
                 m_Disconnect(result.responseCode);
             }
+
+            billingResult.Dispose();
         }
 
         [Preserve]
-        internal void onBillingServiceDisconnected()
+        public void onBillingServiceDisconnected()
         {
             m_Disconnect(GoogleBillingResponseCode.ServiceDisconnected);
         }
