@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor.Callbacks;
-using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 using UnityEngine.Purchasing;
 
@@ -114,21 +113,11 @@ namespace UnityEditor.Purchasing
         /// <param name="target">App store to enable for next build</param>
         public static void TargetAndroidStore(AppStore target)
         {
-            TryTargetAndroidStore(target);
-        }
-
-        internal static AppStore TryTargetAndroidStore(AppStore target)
-        {
-            if (!target.IsAndroid())
-            {
-                throw new ArgumentException(string.Format("AppStore parameter ({0}) must be an Android app store", target));
-            }
-
             ConfigureProject(target);
             SaveConfig(target);
             OnAndroidTargetChange?.Invoke(target);
 
-            return ConfiguredAppStore();
+            ConfiguredAppStore();
         }
 
         // Unfortunately the UnityEditor API updates only the in-memory list of
